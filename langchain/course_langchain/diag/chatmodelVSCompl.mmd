@@ -1,0 +1,23 @@
+flowchart TD
+    A["🧠 LLM Interaction Methods in LangChain"] --> B1["📜 Completion Model"]
+    A --> B2["💬 Chat Model"]
+
+%% Completion Model Branch
+    B1 --> C1["Input: Single Prompt String<br/>(e.g., 'Translate this: Hello')"]
+    B1 --> C2["Output: Single Text Block<br/>(e.g., 'Bonjour')"]
+    B1 --> C3["Used with: OpenAI `text-davinci-003`, Cohere, etc."]
+    B1 --> C4["Best for: Classic NLP tasks<br/>with plain prompt-response format"]
+
+%% Chat Model Branch
+    B2 --> D1["Input: Structured List of Messages<br/>[{'role': 'user', 'content': 'Hi'}, ...]"]
+    B2 --> D2["Output: Structured Response<br/>Includes role & content"]
+    B2 --> D3["Used with: OpenAI `gpt-3.5-turbo`, `gpt-4`, etc."]
+    B2 --> D4["Best for: Conversational Agents & Multi-turn Dialogue"]
+
+%% Style
+    classDef header fill:#d9ead3,stroke:#333,color:#000
+    classDef group fill:#fff2cc,stroke:#666,color:#000
+    class A header
+    class B1,B2 group
+    class C1,C2,C3,C4,D1,D2,D3,D4 group
+

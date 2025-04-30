@@ -1,0 +1,26 @@
+flowchart TD
+    subgraph A["🔄 Input Variables"]
+        X1["key = 'question'"]
+        X2["value = 'What is LangChain?'"]
+    end
+
+    A --> T1
+    A --> T2
+    A --> T3
+    A --> T4
+
+    subgraph LLMChain["🧠 LLMChain: Combines input, memory, and prompt"]
+        T1["📨 HumanMessagePromptTemplate<br/><small>Defines how user input is formatted into a prompt</small>"]
+        T2["🧠 ConversationBufferMemory<br/><small>Stores chat history between turns</small>"]
+        T3["📎 MessagesPlaceholder<br/><small>Injects memory (e.g. past messages) into the prompt</small>"]
+        T4["💬 ChatPromptTemplate<br/><small>Wraps multiple messages into a unified prompt</small>"]
+    end
+
+    Note1["📌 HumanMessagePromptTemplate takes user input as a variable"]
+    Note2["📌 MessagesPlaceholder uses keys from memory like ConversationBufferMemory"]
+    Note3["📌 ChatPromptTemplate aggregates all message types (System, Human, AI)"]
+
+    T1 --> Note1
+    T2 --> Note2
+    T3 --> Note2
+    T4 --> Note3

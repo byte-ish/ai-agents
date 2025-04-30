@@ -1,0 +1,29 @@
+flowchart TD
+    subgraph Chat_Conversation["🧠 Chat Message Flow (Used in Chat Models)"]
+        A["🟪 System Message<br/><small>e.g., 'You are a helpful assistant.'</small>"]
+        B["🟩 User Message<br/><small>e.g., 'What does a comedian say?'</small>"]
+        C["🟨 Assistant Message<br/><small>e.g., 'A comedian tells jokes...'</small>"]
+        B2["🟩 User Message<br/><small>e.g., 'Why do I pay taxes?'</small>"]
+        C2["🟨 Assistant Message<br/><small>e.g., 'Because it’s taxing.'</small>"]
+    end
+
+    subgraph LangChain_Terminology["🔄 LangChain Terminology Mapping"]
+        LA["🟩 Human Message<br/><small>Maps from: User Message</small>"]
+        LB["🟨 AI Message<br/><small>Maps from: Assistant Message</small>"]
+        LC["🟪 System Message<br/><small>Same as Chat Message</small>"]
+    end
+
+    A --> B --> C --> B2 --> C2
+    B --> LA
+    C --> LB
+    A --> LC
+
+    subgraph JSON_Format["🧾 Message Format (JSON-like)"]
+        J1["{ role: 'system', content: 'You are a helpful assistant' }"]
+        J2["{ role: 'user', content: 'Why do I pay taxes?' }"]
+        J3["{ role: 'assistant', content: 'Because it’s taxing' }"]
+    end
+
+    A --> J1
+    B2 --> J2
+    C2 --> J3

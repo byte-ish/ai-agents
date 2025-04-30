@@ -1,0 +1,19 @@
+flowchart TD
+    subgraph CHAIN["🧩 A Chain = Configurable Pipeline for Text Generation"]
+        A["📝 PromptTemplate to use<br/><small>Defines the format of input prompt, e.g., 'Translate this: {text}'</small>"]
+        B["🤖 Language model to use<br/><small>LLM like GPT-4, Claude, etc. for text generation</small>"]
+        C["🧾 Output parser to use<br/><small>Parses LLM output into structured format like JSON, list</small>"]
+        D["🧠 Memory to use<br/><small>Stores previous messages or state across runs</small>"]
+        E["📞 Callbacks to use<br/><small>Used for logging, tracing, streaming, etc.</small>"]
+
+        A --> B
+        B --> C
+        C --> D
+        D --> E
+    end
+
+    NOTE1["📌 Chains let you swap components easily without changing code logic"]
+    NOTE2["🔗 Multiple chains can be linked together to build complex apps (like pipelines)"]
+
+    CHAIN --> NOTE1
+    CHAIN --> NOTE2

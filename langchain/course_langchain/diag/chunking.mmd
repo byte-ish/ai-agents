@@ -1,0 +1,24 @@
+flowchart TD
+    A["1. Input Text<br/>'OpenAI develops powerful models. They are used worldwide. They perform well.'"] --> B["2. Choose Chunking Strategy"]
+
+    B --> C1["→ Fixed Length (by words)<br/>Chunk size = 5 words<br/>→ 'OpenAI develops powerful models.',<br/>'They are used worldwide.', etc."]
+    B --> C2["→ Fixed Length (by tokens)<br/>Chunk size = 100 tokens<br/>Use tokenizer to enforce limits"]
+    B --> C3["→ Sentence-based Chunking<br/>Break at '.', '?', '!' using NLP parser"]
+    B --> C4["→ Paragraph-based Chunking<br/>Split by '\n\n' or layout markers"]
+
+    C1 --> D1["3. Optional: Overlap<br/>e.g., 2-word overlap between chunks"]
+    C3 --> D1
+    C2 --> D1
+    C4 --> D1
+
+    D1 --> E["4. Output Chunks<br/>Clean, consistent-size blocks ready for embedding"]
+
+%% Styling
+    style A fill:#d9ead3,stroke:#333,color:#000
+    style B fill:#fff2cc,stroke:#333,color:#000
+    style C1 fill:#fce5cd,stroke:#333,color:#000
+    style C2 fill:#fce5cd,stroke:#333,color:#000
+    style C3 fill:#fce5cd,stroke:#333,color:#000
+    style C4 fill:#fce5cd,stroke:#333,color:#000
+    style D1 fill:#cfe2f3,stroke:#333,color:#000
+    style E fill:#ead1dc,stroke:#333,color:#000

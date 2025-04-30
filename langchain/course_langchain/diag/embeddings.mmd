@@ -1,0 +1,35 @@
+flowchart TD
+    A["1. Input Text<br/>'AI is powerful'"] --> B["2. Preprocessing<br/>'ai is powerful'"]
+    B --> C["3. Tokenization<br/>→ ['ai', 'is', 'powerful']"]
+    C --> C2["(Optional) Contextual Encoding<br/>e.g., BERT/GPT reads full sentence"]
+    C2 --> D
+    C --> D["4. Word Embedding<br/>'ai' → [0.12, 0.85,...]<br/>'is' → [0.01, 0.05,...]"]
+
+    D --> E1["5. Vector Space<br/>'king' ≈ 'queen',<br/>'powerful' ≠ 'weak'"]
+
+    E1 --> F1["6A. Combine Word Vectors<br/>Avg([ai],[is],[powerful])"]
+    F1 --> F2["6B. Sentence Embedding<br/>→ [0.24, 0.41, 0.78,...]"]
+
+    F2 --> G["7. Use Cases"]
+
+    G --> G1["Semantic Search<br/>'Strong AI' ≈ 'Powerful AI'"]
+    G --> G2["Similarity Matching<br/>'ChatGPT is great' ≈ 'OpenAI bot is useful'"]
+    G --> G3["Classification<br/>e.g., 'angry review' → Negative"]
+    G --> G4["Recommendations<br/>'Liked article A' → Suggest similar articles"]
+    G --> G5["Chatbots<br/>Understand & respond better"]
+
+%% Styling
+    style A fill:#d9ead3,stroke:#333,color:#000
+    style B fill:#fff2cc,stroke:#333,color:#000
+    style C fill:#fce5cd,stroke:#333,color:#000
+    style C2 fill:#ead1dc,stroke:#333,color:#000
+    style D fill:#cfe2f3,stroke:#333,color:#000
+    style E1 fill:#b6d7a8,stroke:#333,color:#000
+    style F1 fill:#b4a7d6,stroke:#333,color:#000
+    style F2 fill:#a2c4c9,stroke:#333,color:#000
+    style G fill:#ead1dc,stroke:#333,color:#000
+    style G1 fill:#f9cb9c,stroke:#333,color:#000
+    style G2 fill:#f9cb9c,stroke:#333,color:#000
+    style G3 fill:#f9cb9c,stroke:#333,color:#000
+    style G4 fill:#f9cb9c,stroke:#333,color:#000
+    style G5 fill:#f9cb9c,stroke:#333,color:#000
