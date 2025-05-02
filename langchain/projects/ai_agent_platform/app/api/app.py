@@ -12,7 +12,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or specify domains for security
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=False,
@@ -34,7 +34,7 @@ async def invoke_agent(request: AgentRequest):
 
     try:
         agent = get_selected_agent()
-        result = agent.invoke({"input": request.input})
+        result = await agent.ainvoke({"input": request.input})
 
         return AgentResponse(result=result["output"] if isinstance(result, dict) else result)
 

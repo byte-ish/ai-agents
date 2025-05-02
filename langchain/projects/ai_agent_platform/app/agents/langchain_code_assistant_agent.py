@@ -1,27 +1,27 @@
-from langchain.agents import initialize_agent, AgentType
-from langchain_openai import ChatOpenAI
-
-from app.llm.llm_provider import get_llm
-from app.tools import all_tools
 import os
+import logging
+from langchain.agents import initialize_agent, AgentType
+from app.llm.llm_provider import get_llm
+from app.tools.tool_registry import all_tools
 from app.utils.logger import logger
+
+# Load tools
+tools = all_tools()
+
+logger.info(f"Discovered {len(tools)} tools for AI Agent: {[tool.name for tool in tools]}")
 
 def get_agent():
     """
-    Initializes and returns the AI Agent with all available tools.
+    Initializes and returns the AI Code Assistant Agent with all registered tools.
+    
+    This agent uses OpenAI function calling and supports multi-tool selection.
     """
-
     logger.info("Initializing AI Code Assistant Agent...")
 
-    # Initialize LLM (OpenAI assumed here)
+    # Initialize LLM
     llm = get_llm()
 
-    # Tools - dynamically loaded
-    tools = all_tools()
-
-    logger.info(f"Loaded {len(tools)} tools into the agent.")
-
-    # Initialize agent with tools
+    # Initialize agent with all available tools
     agent = initialize_agent(
         tools=tools,
         llm=llm,
@@ -29,13 +29,17 @@ def get_agent():
         verbose=True
     )
 
+    logger.info("AI Code Assistant Agent initialized successfully.")
+
     return agent
 
 
 if __name__ == "__main__":
+    logger.info("Running standalone test for AI Agent.")
+
     agent = get_agent()
 
-    # Example multi-query input
+    # Example multi-query input (demonstrates multi tool use)
     user_input = """
 Please review this code for best practices and security:
 
@@ -52,9 +56,11 @@ def fetch_data(urls):
     return results
 """
 
+    # Call agent
     result = agent.invoke({
         "input": user_input
     })
 
-    print("\n==== Agent Output ====\n")
+    # Output result
+    print("\n==== AI Agent Output ====\n")
     print(result)

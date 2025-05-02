@@ -1,19 +1,20 @@
-from typing import TypedDict
+from typing import TypedDict, Optional
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
-from app.tools import all_tools
+from app.tools.tool_registry import all_tools, tool_map, tool_metadata
 from app.llm.llm_provider import get_llm
 from app.utils.markdown_logger import save_tool_output
+from app.utils.logger import logger
 
 
 # ---------------------------
-# Define Agent State properly
+# Define Agent State
 # ---------------------------
 
 class AgentState(TypedDict, total=False):
     input: str
-    tool_to_use: str
-    output: str
+    tool_to_use: Optional[str]
+    output: Optional[str]
 
 
 # ---------------------------
@@ -21,35 +22,63 @@ class AgentState(TypedDict, total=False):
 # ---------------------------
 
 tools = all_tools()
-tool_map = {tool.name: tool for tool in tools}
-
 llm = get_llm()
+
+logger.info(f"Loaded {len(tools)} tools into LangGraph agent.")
+
 
 # ---------------------------
 # Planner Node
 # ---------------------------
 
+def get_tool_descriptions() -> str:
+    """
+    Builds tool descriptions for planner prompt.
+    """
+    tools_meta = tool_metadata()
+    desc_lines = []
+    for tool in tools_meta:
+        desc_lines.append(f"- {tool.name} → {tool.description.strip()}")
+    return "\n".join(desc_lines)
+
+
 planner_prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a planner. Decide which tool to use based on user input. Available tools: {tool_names}. Respond ONLY with tool name."),
+    ("system", """
+You are a planner. Your job is to decide which tool (if any) to use based on the user input.
+
+Available tools:
+
+{tool_descriptions}
+
+If no tool is applicable → reply with "none".
+
+IMPORTANT:
+- Only respond with the tool name (exactly as shown above) or "none". No explanations.
+"""),
     ("human", "{input}")
 ])
 
 planner_chain = planner_prompt | llm
 
-def planner_node(state: AgentState) -> AgentState:
-    user_input = state["input"]
-    tool_names = ", ".join(tool_map.keys())
 
-    response = planner_chain.invoke({
+async def planner_node(state: AgentState) -> AgentState:
+    user_input = state["input"]
+    tool_descriptions = get_tool_descriptions()
+
+    logger.info(f"[Planner] Deciding tool for input: {user_input}")
+
+    response = await planner_chain.ainvoke({
         "input": user_input,
-        "tool_names": tool_names
+        "tool_descriptions": tool_descriptions
     })
 
-    # FIXED → make sure response is safely treated as string
     tool_name = str(response).strip()
 
-    if tool_name not in tool_map:
+    if tool_name == "none" or tool_name not in tool_map():
+        logger.info("[Planner] No tool selected.")
         tool_name = None
+    else:
+        logger.info(f"[Planner] Selected tool: {tool_name}")
 
     return {
         "input": user_input,
@@ -61,14 +90,20 @@ def planner_node(state: AgentState) -> AgentState:
 # Tool Executor Node
 # ---------------------------
 
-def tool_node(state: AgentState) -> AgentState:
+async def tool_node(state: AgentState) -> AgentState:
     user_input = state["input"]
     tool_name = state["tool_to_use"]
 
     if tool_name:
-        tool = tool_map[tool_name]
-        result = tool.invoke({"code": user_input})
-        save_tool_output(tool_name, user_input, result)
+        tool = tool_map()[tool_name]
+
+        logger.info(f"[Tool Executor] Invoking tool: {tool_name}")
+
+        # Run the tool async
+        result = await tool.ainvoke({"code": user_input})
+
+        # Save to markdown (async safe version → already handled by tool internally or use asyncio if needed)
+        await save_tool_output(tool_name, user_input, result)
 
         return {
             "input": user_input,
@@ -78,7 +113,9 @@ def tool_node(state: AgentState) -> AgentState:
 
     else:
         output = f"No valid tool found for input. User said:\n\n{user_input}"
-        save_tool_output("agent_response", user_input, output)
+        logger.info("[Tool Executor] No valid tool, returning fallback output.")
+
+        await save_tool_output("agent_response", user_input, output)
 
         return {
             "input": user_input,
@@ -88,7 +125,7 @@ def tool_node(state: AgentState) -> AgentState:
 
 
 # ---------------------------
-# Define Graph and Compile
+# Build LangGraph
 # ---------------------------
 
 graph = StateGraph(AgentState)
@@ -101,4 +138,7 @@ graph.add_edge("tool_executor", END)
 
 graph.set_entry_point("planner")
 
+# Compile the graph to use as agent
 code_assistant_agent = graph.compile()
+
+logger.info("LangGraph Code Assistant Agent is ready.")

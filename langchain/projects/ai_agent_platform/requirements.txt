@@ -1,17 +1,17 @@
 # LangChain core framework
-langchain>=0.1.13
+langchain>=0.3.0
 
 # LangChain OpenAI integration
-langchain-openai>=0.1.3
+langchain-openai>=0.3.16
 
-# LangChain Community (for various chains, tools - optional but recommended)
-langchain-community>=0.0.30
+# LangChain Community (optional but recommended)
+langchain-community>=0.3.22
 
 # OpenAI SDK
 openai>=1.10.0
 
-# Pydantic (LangChain uses internally + for BaseModel + args_schema)
-pydantic>=2.0
+# Pydantic
+pydantic>=2.11.0
 
 # FastAPI (optional if you want to expose as microservice)
 fastapi>=0.110.0
@@ -19,15 +19,14 @@ fastapi>=0.110.0
 # Uvicorn (for running FastAPI)
 uvicorn[standard]>=0.29.0
 
-# Logging (built-in, no need)
-
 # Pytest (for running tests)
 pytest>=8.0.0
 
 # Python-dotenv (optional, for loading env variables easily)
 python-dotenv>=1.0.0
 
-# httpx or requests if custom LLM needs HTTP
+# HTTP client
 httpx>=0.27.0
 
-langgraph>=0.0.26
+# LangGraph
+langgraph>=0.2.20,<0.3
