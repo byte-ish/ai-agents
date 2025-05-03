@@ -1,3 +1,4 @@
+import asyncio
 from typing import TypedDict, Optional
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, END
@@ -41,7 +42,6 @@ def get_tool_descriptions() -> str:
         desc_lines.append(f"- {tool.name} → {tool.description.strip()}")
     return "\n".join(desc_lines)
 
-
 planner_prompt = ChatPromptTemplate.from_messages([
     ("system", """
 You are a planner. Your job is to decide which tool (if any) to use based on the user input.
@@ -50,10 +50,11 @@ Available tools:
 
 {tool_descriptions}
 
-If no tool is applicable → reply with "none".
+If no tool applies → reply exactly with "none".
 
 IMPORTANT:
-- Only respond with the tool name (exactly as shown above) or "none". No explanations.
+- Only respond with the tool name (exact name above) or "none".
+- No explanations.
 """),
     ("human", "{input}")
 ])
@@ -65,7 +66,7 @@ async def planner_node(state: AgentState) -> AgentState:
     user_input = state["input"]
     tool_descriptions = get_tool_descriptions()
 
-    logger.info(f"[Planner] Deciding tool for input: {user_input}")
+    logger.info(f"[Planner] User input → {user_input}")
 
     response = await planner_chain.ainvoke({
         "input": user_input,
@@ -78,7 +79,7 @@ async def planner_node(state: AgentState) -> AgentState:
         logger.info("[Planner] No tool selected.")
         tool_name = None
     else:
-        logger.info(f"[Planner] Selected tool: {tool_name}")
+        logger.info(f"[Planner] Selected tool → {tool_name}")
 
     return {
         "input": user_input,
@@ -97,13 +98,13 @@ async def tool_node(state: AgentState) -> AgentState:
     if tool_name:
         tool = tool_map()[tool_name]
 
-        logger.info(f"[Tool Executor] Invoking tool: {tool_name}")
+        logger.info(f"[Tool Executor] Running tool → {tool_name}")
 
         # Run the tool async
         result = await tool.ainvoke({"code": user_input})
 
         # Save to markdown (async safe version → already handled by tool internally or use asyncio if needed)
-        await save_tool_output(tool_name, user_input, result)
+        # await asyncio.to_thread(save_tool_output, tool_name, user_input, result)
 
         return {
             "input": user_input,
@@ -112,15 +113,15 @@ async def tool_node(state: AgentState) -> AgentState:
         }
 
     else:
-        output = f"No valid tool found for input. User said:\n\n{user_input}"
-        logger.info("[Tool Executor] No valid tool, returning fallback output.")
+        fallback_output = f"No valid tool found for input. User said:\n\n{user_input}"
+        logger.info("[Tool Executor] No valid tool. Returning fallback output.")
 
-        await save_tool_output("agent_response", user_input, output)
+        await save_tool_output("agent_response", user_input, fallback_output)
 
         return {
             "input": user_input,
             "tool_to_use": "none",
-            "output": output
+            "output": fallback_output
         }
 
 

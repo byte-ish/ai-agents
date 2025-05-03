@@ -34,6 +34,7 @@ async def invoke_agent(request: AgentRequest):
 
     try:
         agent = get_selected_agent()
+
         result = await agent.ainvoke({"input": request.input})
 
         return AgentResponse(result=result["output"] if isinstance(result, dict) else result)

@@ -2,8 +2,9 @@ import importlib
 import pkgutil
 import inspect
 import logging
+from typing import List, Dict, Optional
+
 from langchain.tools import BaseTool
-from typing import List, Dict, Optional, Union
 
 logger = logging.getLogger("tool_registry")
 
@@ -12,14 +13,16 @@ class ToolInfo:
     """
     Metadata holder for each tool.
     """
-    def __init__(self, name: str, description: str, tags: Optional[List[str]], tool_obj: BaseTool):
+
+    def __init__(self, name: str, description: str, tags: Optional[List[str]], tool_obj: BaseTool, is_async: bool):
         self.name = name
         self.description = description
         self.tags = tags or []
         self.tool = tool_obj
+        self.is_async = is_async
 
     def __repr__(self):
-        return f"ToolInfo(name={self.name}, description={self.description}, tags={self.tags})"
+        return f"ToolInfo(name={self.name}, async={self.is_async}, description={self.description}, tags={self.tags})"
 
 
 class ToolRegistry:
@@ -33,7 +36,7 @@ class ToolRegistry:
 
     def discover_tools(self) -> None:
         """
-        Scans the tools package and auto-discovers all tools decorated with @tool or RunnableTool.from_function
+        Scans the tools package and auto-discovers all tools (RunnableTool, StructuredTool, etc)
         """
         logger.info(f"Discovering tools in package: {self.package}")
 
@@ -49,13 +52,29 @@ class ToolRegistry:
             logger.info(f"Loading module: {full_module_name}")
             module = importlib.import_module(full_module_name)
 
-            # Inspect module for tool objects
             for name, obj in inspect.getmembers(module):
+
                 if isinstance(obj, BaseTool):
+
                     description = obj.description or "No description available"
-                    tags = getattr(obj, "tags", [])  # Optional tags attribute
-                    self.tools[obj.name] = ToolInfo(obj.name, description, tags, obj)
-                    logger.info(f"Registered tool: {obj.name} with tags: {tags}")
+                    tags = getattr(obj, "tags", [])
+
+                    # --- Safe Async Detection ---
+                    is_async = self._is_async_tool(obj)
+
+                    # Register tool
+                    self.tools[obj.name] = ToolInfo(obj.name, description, tags, obj, is_async)
+                    logger.info(f"Registered tool: {obj.name} | Async: {is_async} | Tags: {tags}")
+
+    def _is_async_tool(self, tool: BaseTool) -> bool:
+        """
+        Detect if tool supports async execution safely.
+        """
+        if hasattr(tool, "acall") and inspect.iscoroutinefunction(tool.acall):
+            return True
+        if inspect.iscoroutinefunction(tool.invoke):
+            return True
+        return False
 
     def get_all_tools(self) -> List[BaseTool]:
         """
@@ -65,36 +84,37 @@ class ToolRegistry:
 
     def get_tool_by_name(self, name: str) -> Optional[BaseTool]:
         """
-        Retrieve a tool by name.
+        Get a single tool by name.
         """
         tool_info = self.tools.get(name)
         return tool_info.tool if tool_info else None
 
     def get_tool_metadata(self) -> List[ToolInfo]:
         """
-        Retrieve metadata for all registered tools.
+        Get all tool metadata.
         """
         return list(self.tools.values())
 
     def get_tool_map(self) -> Dict[str, BaseTool]:
         """
-        Returns a mapping of tool name to tool object.
+        Get mapping of tool name → tool object
         """
         return {name: info.tool for name, info in self.tools.items()}
 
 
-# Singleton registry instance
+# --- Singleton Registry ---
 tool_registry = ToolRegistry()
 tool_registry.discover_tools()
 
 
-# --- Public methods ---
-
+# --- Public Accessors ---
 def all_tools() -> List[BaseTool]:
     return tool_registry.get_all_tools()
 
+
 def tool_map() -> Dict[str, BaseTool]:
     return tool_registry.get_tool_map()
+
 
 def tool_metadata() -> List[ToolInfo]:
     return tool_registry.get_tool_metadata()
