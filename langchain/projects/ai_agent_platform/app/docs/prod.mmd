@@ -1,0 +1,73 @@
+graph TD
+%% Styling
+    classDef UI fill:#D9E8FB,stroke:#4A90E2,stroke-width:2px,color:#000;
+    classDef API fill:#D6F5D6,stroke:#4CAF50,stroke-width:2px,color:#000;
+    classDef Agent fill:#FFE6CC,stroke:#FF9900,stroke-width:2px,color:#000;
+    classDef Tools fill:#F9D5E5,stroke:#E91E63,stroke-width:2px,color:#000;
+    classDef LLM fill:#FFFACD,stroke:#FFCC00,stroke-width:2px,color:#000;
+    classDef Logs fill:#E0E0E0,stroke:#616161,stroke-width:2px,color:#000;
+
+%% UI Layer
+    subgraph User_Interface ["User Interface"]
+        StreamlitUI["Streamlit Frontend (User Input & Output)"]:::UI
+    end
+
+%% API Layer
+    subgraph API_Layer ["API Layer (FastAPI + Background Tasks)"]
+        FastAPI["FastAPI (REST API)"]:::API
+        TaskManager["Background Task Manager (Async Tasks)"]:::API
+    end
+
+%% AI Agent Layer
+    subgraph Agent_Layer ["AI Agent (LangGraph Based Orchestrator)"]
+        LangGraphAgent["LangGraph Agent"]:::Agent
+        Planner["Planner Node (Decide Tool)"]:::Agent
+        ToolExecutor["Tool Executor Node (Invoke Tool)"]:::Agent
+    end
+
+%% Tools Layer
+    subgraph Tools_Layer ["Tools & Utilities"]
+        ToolRegistry["Tool Registry (Discovers Tools)"]:::Tools
+        ToolDecorators["@tool Decorated Async Tools"]:::Tools
+    end
+
+%% LLM Providers
+    subgraph LLM_Layer ["LLM Providers"]
+        LLMSelector["LLM Selector"]:::LLM
+        OpenAI["OpenAI GPT-4 Turbo"]:::LLM
+        Ollama["Ollama Llama3"]:::LLM
+        DummyLLM["Dummy LLM (Testing)"]:::LLM
+    end
+
+%% Logs Layer
+    subgraph Logs_Layer ["Logging & History"]
+        MarkdownLogger["Markdown Logger (File Output)"]:::Logs
+        PersistentStorage["(Future) Persistent DB for History"]:::Logs
+    end
+
+%% Flow arrows
+    StreamlitUI -->|User submits request| FastAPI
+    FastAPI -->|Start background task| TaskManager
+    TaskManager -->|Invoke agent| LangGraphAgent
+    LangGraphAgent --> Planner
+    Planner -->|Decide tool| ToolExecutor
+    ToolExecutor -->|Lookup| ToolRegistry
+    ToolRegistry --> ToolDecorators
+    ToolExecutor -->|Invoke Tool| ToolDecorators
+
+    ToolExecutor -->|LLM call if needed| LLMSelector
+    LLMSelector --> OpenAI
+    LLMSelector --> Ollama
+    LLMSelector --> DummyLLM
+
+    ToolDecorators -->|Tool Output| ToolExecutor
+    ToolExecutor -->|Log output| MarkdownLogger
+    ToolExecutor -->|Agent Response| LangGraphAgent
+    LangGraphAgent --> TaskManager
+    TaskManager --> FastAPI
+    FastAPI -->|Return response| StreamlitUI
+
+%% Optional links to storage
+    FastAPI --> PersistentStorage
+    TaskManager --> PersistentStorage
+    StreamlitUI --> PersistentStorage

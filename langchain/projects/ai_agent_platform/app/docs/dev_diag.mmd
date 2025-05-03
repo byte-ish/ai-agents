@@ -1,0 +1,68 @@
+graph TD
+
+%% Streamlit UI
+    subgraph User ["User Interface"]
+        Streamlit["Streamlit UI (Frontend)"]
+    end
+
+%% FastAPI
+    subgraph API ["API Layer"]
+        FastAPI["FastAPI Server"]
+        BackgroundTask["Background Task Dispatcher (Async Tasks)"]
+    end
+
+%% Agent
+    subgraph Agent ["AI Agent (LangGraph Based)"]
+        LangGraphAgent["LangGraph Agent"]
+        Planner["Planner Node"]
+        ToolExecutor["Tool Executor Node"]
+    end
+
+%% Tool Management
+    subgraph Tools ["Tool Management"]
+        ToolRegistry["Tool Registry"]
+        ToolModules["@tool Decorated Tools"]
+    end
+
+%% LLM Provider
+    subgraph LLM ["LLM Providers"]
+        LLMSelector["LLM Provider Selector"]
+        OpenAI["OpenAI (GPT-4 Turbo)"]
+        Ollama["Ollama (Llama 3)"]
+        DummyLLM["Dummy LLM"]
+    end
+
+%% Logs
+    subgraph Logs ["Logging and History"]
+        MarkdownLogger["Markdown Logger"]
+        PersistentHistory["(Future) Persistent DB"]
+    end
+
+%% == FLOW ==
+
+    Streamlit -->|User Input| FastAPI
+    FastAPI -->|Submit Task| BackgroundTask
+    BackgroundTask -->|Invoke| LangGraphAgent
+    LangGraphAgent --> Planner
+    Planner -->|Select Tool| ToolExecutor
+    ToolExecutor -->|Lookup| ToolRegistry
+    ToolRegistry --> ToolModules
+    ToolExecutor -->|Invoke Tool| ToolModules
+
+    ToolExecutor -->|If LLM Needed| LLMSelector
+    LLMSelector --> OpenAI
+    LLMSelector --> Ollama
+    LLMSelector --> DummyLLM
+
+    ToolModules -->|Tool Result| ToolExecutor
+    ToolExecutor -->|Log Result| MarkdownLogger
+
+    ToolExecutor -->|Agent Output| LangGraphAgent
+    LangGraphAgent --> BackgroundTask
+    BackgroundTask --> FastAPI
+    FastAPI -->|Response| Streamlit
+
+%% History
+    FastAPI --> PersistentHistory
+    Streamlit --> PersistentHistory
+    BackgroundTask --> PersistentHistory

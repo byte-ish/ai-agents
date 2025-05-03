@@ -1,0 +1,65 @@
+graph TD
+
+%% CLIENT
+    subgraph Client [User Interface]
+        StreamlitUI["🧑‍💻 Streamlit UI"]
+    end
+
+%% API
+    subgraph API [Backend API]
+        FastAPI["🚀 FastAPI (Receives Request)"]
+        BackgroundTask["⏳ Background Task (Async Processing)"]
+    end
+
+%% AGENT
+    subgraph LangGraphAgent [AI Orchestration]
+        LangGraphAgentCore["🧠 LangGraph Agent"]
+        Planner["📍 Planner Node"]
+        ToolExecutor["🛠️ Tool Executor Node"]
+    end
+
+%% TOOLS
+    subgraph Tools [Dynamic Async Tools]
+        ToolRegistry["📦 Tool Registry"]
+        ToolRunner["🔧 @tool Decorated Tools"]
+    end
+
+%% LLM
+    subgraph LLMProvider [LLM Backend]
+        LLMSelector["🎛️ Provider Selector (settings.py)"]
+        OpenAI["🤖 OpenAI"]
+        Ollama["🦙 Ollama (default)"]
+        DummyLLM["🧹 Dummy LLM"]
+    end
+
+%% LOGGING
+    subgraph Logs [Logs & History]
+        MarkdownLogger["📝 Markdown Logger (logs/*.md)"]
+        PersistentDB["📚 Persistent History DB (future)"]
+    end
+
+%% === Flow Arrows ===
+
+    StreamlitUI -->|Submit Request| FastAPI
+    FastAPI -->|Create Task| BackgroundTask
+    BackgroundTask -->|Run Agent| LangGraphAgentCore
+
+    LangGraphAgentCore --> Planner
+    Planner -->|Decide Tool| ToolExecutor
+    ToolExecutor -->|Fetch tool| ToolRegistry
+    ToolRegistry --> ToolRunner
+    ToolRunner -->|Run Async Tool| ToolExecutor
+
+    LangGraphAgentCore -->|Use LLM| LLMSelector
+    LLMSelector --> OpenAI
+    LLMSelector --> Ollama
+    LLMSelector --> DummyLLM
+
+    ToolExecutor -->|Tool Result| MarkdownLogger
+    ToolExecutor --> BackgroundTask
+    BackgroundTask -->|Task Done| FastAPI
+    FastAPI -->|Return to User| StreamlitUI
+
+    FastAPI --> PersistentDB
+    StreamlitUI --> PersistentDB
+    BackgroundTask --> PersistentDB
