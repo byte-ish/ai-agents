@@ -26,7 +26,7 @@ async def code_reviewer(code: str) -> str:
 
     output = ["## === CODE REVIEW REPORT ===\n"]
     for step in result["review_steps"]:
-        output.append(f"--- {step['step']} ---\n{step['reviewed_code']}\n")
+        output.append(f"## --- {step['step']} ---\n{step['reviewed_code']}\n")
     output.append("## === FINAL REVIEWED CODE ===\n")
     output.append(result["final_code"])
 

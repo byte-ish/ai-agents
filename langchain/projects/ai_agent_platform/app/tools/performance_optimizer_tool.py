@@ -29,7 +29,7 @@ async def performance_optimizer(code: str) -> str:
 
     output = ["## === PERFORMANCE OPTIMIZATION REPORT ===\n"]
     for step in result["optimization_steps"]:
-        output.append(f"--- {step['step']} ---\n{step['optimized_code']}\n")
+        output.append(f"## --- {step['step']} ---\n{step['optimized_code']}\n")
     output.append("## === FINAL OPTIMIZED CODE ===\n")
     output.append(result["final_code"])
 
